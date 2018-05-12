@@ -1,11 +1,14 @@
 from model import session, Measurement, City
+from robonomics_lighthouse.msg import Bid, Ask
 from std_msgs.msg import String
 from std_srvs.srv import Empty
 import rospy
 
 if __name__ == '__main__':
     rospy.init_node('measurements_query', anonymous=True)
+
     pub = rospy.Publisher('measurement', String, queue_size=200)
+    bids = rospy.Publisher('infochan/signing/bid', Bid, queue_size=10)
     finish = rospy.ServiceProxy('liability/finish', Empty)
 
     def select_city(msg):
@@ -26,5 +29,18 @@ if __name__ == '__main__':
             print("Service call failed: {}".format(e))
 
     rospy.Subscriber('select_city', String, select_city)
+
+    def dummy_producer(msg):
+        bid = Bid()
+        bid.model = msg.model
+        bid.token = msg.token
+        bid.cost  = msg.cost
+        bid.count = msg.count
+        bid.deadline = msg.deadline
+        bid.validator = '0x0000000000000000000000000000000000000000'
+        bid.validatorFee = 0
+        bids.publish(bid)
+
+    rospy.Subscriber('infochan/incoming/ask', Ask, dummy_producer)
 
     rospy.spin()
