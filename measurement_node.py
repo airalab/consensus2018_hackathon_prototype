@@ -12,8 +12,9 @@ if __name__ == '__main__':
     finish = rospy.ServiceProxy('liability/finish', Empty)
 
     def select_city(msg):
+        rospy.loginfo('Measurement selection task: {}'.format(msg.data))
         s = session()
-        for city_name in msg.data.split(", "):
+        for city_name in msg.data.split(', '):
             try:
                 city = s.query(City).filter(City.name == city_name).one()
                 for m in s.query(Measurement).filter(Measurement.city_id == city.id):
@@ -31,14 +32,13 @@ if __name__ == '__main__':
     rospy.Subscriber('select_city', String, select_city)
 
     def dummy_producer(msg):
+        rospy.loginfo('Received ASK with objective: {}'.format(msg.objective))
         bid = Bid()
         bid.model = msg.model
         bid.token = msg.token
         bid.cost  = msg.cost
         bid.count = msg.count
         bid.deadline = msg.deadline
-        bid.validator = '0x0000000000000000000000000000000000000000'
-        bid.validatorFee = 0
         bids.publish(bid)
 
     rospy.Subscriber('infochan/incoming/ask', Ask, dummy_producer)
